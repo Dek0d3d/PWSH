@@ -1,6 +1,7 @@
 ####################################################################
 # This Script Renders a GUI which will assist in running commands. #
 ####################################################################
+$Script:tenant = ""
 
 Function CheckModule{
     if(!(Get-InstalledModule | Where-Object Name -like "*Microsoft.Graph*")){
@@ -24,6 +25,20 @@ Function InstallModule {
 Function ConnectModule {
     Import-Module Microsoft.Graph
     Connect-MgGraph
+    GetConnection
+    RenderGUI
+}
+
+Function GetConnection {
+    $Script:tenant = Get-MgOrganization | Select-Object -Property *
+}
+
+Function DisplayTenantInfo {
+    $TenantLabel = New-Object System.Windows.Forms.Label
+    $TenantLabel.Text = $Script:tenant
+    $Tenantlabel.Width = 400
+    $TenantLabel.Height = 300
+    $flowPanel.Controls.Add($TenantLabel)
 }
 
 Function GenerateGUI {
@@ -40,16 +55,20 @@ Function GenerateGUI {
     $flowPanel.AutoSize = $true
     
     $Label = New-Object System.Windows.Forms.Label
-    $Label.Text = "Microsoft Graph Powershell SDK installed:" + $mgInstalled
+    $Label.Text = "Microsoft Graph Powershell SDK installed:" + $(CheckModule)
     $label.Width = 400
-    $Label.AutoSize = $true
+    $Label.Height = 25
     $flowPanel.Controls.Add($Label)
 
     $connectButton = New-Object System.Windows.Forms.Button
     $connectButton.Size = New-Object System.Drawing.Size(120,23)
     $connectButton.Text = "Connect"
-    $connectButton.Add_Click({ConnectModule})
-
+    if($Global:tenant){
+        $connectButton.Enabled = $false
+    } else {
+        $connectButton.Add_Click({ConnectModule})
+    }
+    
     $installButton = New-Object System.Windows.Forms.Button
     $installButton.Size = New-Object System.Drawing.Size(120,23)
     $installButton.Text = "Install"
