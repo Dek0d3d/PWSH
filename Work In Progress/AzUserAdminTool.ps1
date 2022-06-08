@@ -20,14 +20,14 @@ Function InitModPanel {
 
 Function InstallModule {
     Install-Module Microsoft.Graph -Scope CurrentUser
-    DisplayConnection $gui
+    DisplayConnection $guiPanel
 }
 
 Function ConnectModule {
     Import-Module Microsoft.Graph
     Connect-MgGraph
     GetConnection
-    DisplayConnection $gui
+    DisplayConnection $guiPanel
 }
 
 Function UpdateModButton {
@@ -54,19 +54,19 @@ Function GetConnection {
 }
 
 Function DisplayTenantInfo {
-    param([Parameter()][System.Windows.Forms.FlowLayoutPanel]$thisPanel)
+    param([Parameter()][System.Windows.Forms.TableLayoutPanel]$thisPanel)
 
     $TenantLabel = New-Object System.Windows.Forms.Label
+    $TenantLabel.AutoSize = $true
     $TenantLabel.TextAlign = "MiddleLeft"
     $TenantLabel.Text = "$(($Script:tenant).DisplayName) : $(($Script:tenant).Id)"
-    $TenantLabel.Width = 280
-    $TenantLabel.Height = 25
+    $TenantLabel.Anchor = 'Bottom,Left'
     
     $UserLabel = New-Object System.Windows.Forms.Label
     $UserLabel.TextAlign = "MiddleRight"
+    $UserLabel.AutoSize = $true
     $UserLabel.Text = "$((Get-MgContext).Account)"
-    $UserLabel.Width = 280
-    $UserLabel.Height = 25
+    $UserLabel.Anchor = 'Bottom,Right'
     
     $thisPanel.Controls.Add($TenantLabel)
     $thisPanel.Controls.Add($UserLabel)
@@ -129,28 +129,30 @@ Function SetupDataPanel {
 
     $UPNlbl = New-Object System.Windows.Forms.Label
     $UPNlbl.Text = "UserPrincipalName:"
-    $UPNlbl.AutoSize
-    $UPNlbl.TextAlign = 'MiddleLeft'
-    $thisPanel.Controls.Add($UPNlnl)
+    $UPNlbl.AutoSize = $true
+    $UPNlbl.Dock = 'Fill'
+    $thisPanel.Controls.Add($UPNlbl)
 
     $UPNtxtBox = New-Object System.Windows.Forms.TextBox
-    $UPNtxtBox.AutoSize
-    $UPNtxtBox.TextAlign = 'MiddleLeft'
     $UPNtxtBox.Name = "UPNText"
+    $UPNtxtBox.AutoSize = $true
+    $UPNtxtBox.Dock = 'Fill'
     $thisPanel.Controls.Add($UPNtxtBox)
 
     ForEach($Prop in $(ValidProps).GetEnumerator()){
         $lbl = New-Object System.Windows.Forms.Label
         $lbl.Text = "$($Prop.Name):"
-        $lbl.AutoSize
-        $lbl.TextAlign = 'MiddleLeft'
+        $lbl.AutoSize = $true
+        $lbl.Dock = 'Fill'
         $thisPanel.Controls.Add($lbl)
 
         $txtbx = New-Object System.Windows.Forms.TextBox
         $txtbx.Name = "$($Prop.Name)txt"
-        $txtbx.AutoSize
-        $txtbx.TextAlign = 'MiddleLeft'
-        $thisPanel.Controls.Add($lbl)
+        $txtbx.Text = ""
+        $txtbx.Enabled = $false
+        $txtbx.AutoSize = $true
+        $txtbx.Dock = 'Fill'
+        $thisPanel.Controls.Add($txtbx)
     }
 
 }
@@ -166,76 +168,81 @@ Function PopulateDataPanel {
 }
 
 Function GenerateDataPanel {
-    param([Parameter()][System.Windows.Forms.Form]$gui)
+    param([Parameter()][System.Windows.Forms.TableLayoutPanel]$guiPanel)
+
+    $ModeGroupBox = New-Object System.Windows.Forms.GroupBox
+    $ModeGroupBox.Text = "Mode of Operation"
+    $ModeGroupBox.AutoSize
+    $ModeGroupBox.AutoSizeMode = 'GrowAndShrink'
+    $ModeGroupBox.MaximumSize = '4000,50'
+    $ModeGroupBox.Dock = 'Fill'
+    $ModeGroupBox.Padding = '5,5,5,5'
+    $guiPanel.Controls.Add($ModeGroupBox)
+
+    $GetModeRB = New-Object System.Windows.Forms.RadioButton
+    $GetModeRB.Text = "Display/Modify"
+    $GetModeRB.AutoSize = $true
+    $GetModeRB.Location = '100,20'
+
+    $CreateModeRB = New-Object System.Windows.Forms.RadioButton
+    $CreateModeRB.Text = "Create"
+    $CreateModeRB.AutoSize = $true
+    $CreateModeRB.Location = '250,20'
+    $ModeGroupBox.Controls.AddRange(@($GetModeRB,$CreateModeRB))
 
     $DataPanel = New-Object System.Windows.Forms.TableLayoutPanel
     $DataPanel.RowCount = 0
     $DataPanel.ColumnCount = 2
-    $DataPanel.Size = New-Object System.Drawing.Size(575,250)
-    $DataPanel.Location = New-Object System.Drawing.Point(5,110)
-    $DataPanel.AutoSize
+    $DataPanel.AutoSize = $true
+    $DataPanel.AutoSizeMode = 'GrowAndShrink'
+    $DataPanel.Padding = '5,5,5,5'
     $DataPanel.BackColor = "White"
     $DataPanel.BorderStyle = "Fixed3D"
-
-    $GetModeRB = New-Object System.Windows.Forms.RadioButton
-    $GetModeRB.Width = 200
-    $GetModeRB.Location = New-Object System.Drawing.Point(100,15)
-    $GetModeRB.Text = "Display/Modify"
-
-    $CreateModeRB = New-Object System.Windows.Forms.RadioButton
-    $CreateModeRB.Width = 200
-    $CreateModeRB.Location = New-Object System.Drawing.Point(330,15)
-    $CreateModeRB.Text = "Create"
-
-    $ModeGroupBox = New-Object System.Windows.Forms.GroupBox
-    $ModeGroupBox.Text = "Mode of Operation"
-    $ModeGroupBox.Size = New-Object System.Drawing.Size(575,45)
-    $ModeGroupBox.Location = New-Object System.Drawing.Point(5,60)
-    $ModeGroupBox.Controls.AddRange(@($GetModeRB,$CreateModeRB))
-
-    $gui.Controls.Add($ModeGroupBox)
-
+    $DataPanel.Anchor = 'Left,Right,Bottom'
+    
     SetupDataPanel $DataPanel
-    $gui.Controls.Add($DataPanel)
+    $guiPanel.Controls.Add($DataPanel)
 
 }
 
 Function DisplayConnection {
-    param([Parameter()][System.Windows.Forms.Form]$gui)
+    param([Parameter()][System.Windows.Forms.TableLayoutPanel]$guiPanel)
 
-    if ($gui.Controls.ContainsKey("ConnectPanel")){
-        $gui.Controls.RemoveByKey("ConnectPanel")
+    if ($guiPanel.Controls.ContainsKey("ConnectPanel")){
+        $guiPanel.Controls.RemoveByKey("ConnectPanel")
     }
+
+    $connectPanel = New-Object System.Windows.Forms.TableLayoutPanel
+    $connectPanel.Name = "ConnectPanel"
+    $connectPanel.RowCount = 2
+    $connectPanel.ColumnCount = 2
+    $connectPanel.AutoSize = $true
+    $connectPanel.AutoSizeMode = 'GrowAndShrink'
+    $connectPanel.Padding = '5,5,5,5'
+    $connectPanel.BackColor = "White"
+    $connectPanel.BorderStyle = "Fixed3D"
+    $connectPanel.Anchor = 'Top,Left,Right,Bottom'
+    $guiPanel.Controls.Add($connectPanel)
 
     $modLabel = New-Object System.Windows.Forms.Label
     $modLabel.TextAlign = "MiddleLeft"
     $modLabel.Text = "Microsoft Graph Powershell SDK installed:" + $(CheckModule)
-    $modlabel.Width = 440
-    $modLabel.Height = 25
+    $modLabel.AutoSize = $true
+    $modlabel.Anchor = 'Top,Left'
 
     $modButton = New-Object System.Windows.Forms.Button
-    $modButton.Size = New-Object System.Drawing.Size(120,20)
     UpdateModButton $modButton
-
-    $connectPanel = New-Object System.Windows.Forms.FlowLayoutPanel
-    $connectPanel.Name = "ConnectPanel"
-    $connectPanel.AutoSize = $true
-    $connectPanel.MaximumSize = $gui.Size
-    $connectPanel.Width = 575
-    $connectPanel.Height = 50
-    $connectPanel.Location = New-Object System.Drawing.Point(5,5)
-    $connectPanel.BackColor = "White"
-    $connectPanel.BorderStyle = "Fixed3D"
+    $modButton.AutoSize = $true
+    $modButton.AutoSizeMode = 'GrowAndShrink'
+    $modButton.Anchor = 'Top,Right'
+    
     $connectPanel.Controls.Add($modLabel)
     $connectPanel.Controls.Add($modButton)
 
     if($Script:connected){
         DisplayTenantInfo $connectPanel
-        $gui.Controls.Add($connectPanel)
-        GenerateDataPanel $gui
-    } else {
-        $gui.Controls.Add($connectPanel)
-    }
+        GenerateDataPanel $guiPanel
+    } 
 
 }
 
@@ -246,11 +253,20 @@ Function GenerateGUI {
 
     $gui = New-Object System.Windows.Forms.Form
     $gui.Text = 'Azure AD User Admin Tool'
-    $gui.Width = 600
-    $gui.Height = 400
-    $gui.AutoSize
+    $gui.Size = '600,400'
 
-    DisplayConnection $gui
+    $guiPanel = New-Object System.Windows.Forms.TableLayoutPanel
+    $guiPanel.RowCount = 3
+    $guiPanel.ColumnCount = 1
+    $guiPanel.AutoSize = $true
+    $guiPanel.AutoSizeMode = 'GrowAndShrink'
+    $guiPanel.Padding = '5,5,5,5'
+    $guiPanel.Dock = 'Fill'
+    $guiPanel.AutoScroll = $true
+    $guiPanel.
+    $gui.Controls.Add($guiPanel)
+
+    DisplayConnection $guiPanel
 
     $gui.ShowDialog()
 
